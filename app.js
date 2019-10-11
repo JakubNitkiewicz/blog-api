@@ -2,9 +2,11 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const path = require('path')
 const app = express()
+const cors = require('cors')
 require('dotenv').config()
 
 const db = require('./db')
+app.use(cors())
 app.use(bodyParser.json())
 app.use(
   bodyParser.urlencoded({
@@ -35,12 +37,14 @@ db.authenticate()
 .catch(err => console.log('Error: ' + err))
 
 // Import routes
-const authRoute = require('./routes/auth')
-const installRoute = require('./routes/install')
+const authRoutes = require('./routes/auth')
+const installRoutes = require('./routes/install')
+const userRoutes = require('./routes/user')
 
 // Route MiddleWare
-app.use('/api/install', installRoute)
-app.use('/api/user', authRoute)
+app.use('/api/install', installRoutes)
+app.use('/api/auth', authRoutes)
+app.use('/api/user', userRoutes)
 
 
 //test

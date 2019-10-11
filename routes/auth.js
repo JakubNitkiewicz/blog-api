@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 
 const User = require('../models/User')
+const AuthUser = require('../models/AuthUser')
 const {
   signupValidation,
   loginValidation
@@ -21,33 +22,27 @@ router.get('/', (req, res) => {
 
 // Register user route
 router.post('/signup', async (req, res) => {
-  console.log('a')
   // Hash password
   const salt = await bcrypt.genSalt(10)
-  
-  console.log('a1')
-  console.log(req.body.password)
   const hashedPassword = await bcrypt.hash(req.body.password, salt)
 
-  console.log('b')
   const user = {
     username: req.body.username,
     email: req.body.email,
     password: hashedPassword
   }
 
-  console.log('c')
   // Validate input
   const error = signupValidation(user).error
   if (error) return res.status(400).send(error.details)
-
-  console.log('d')
+  console.log('a')
   // Check if email/username already exists
-  const emailExists = await User.findOne({
+  const emailExists = await AuthUser.findOne({
     where: {
       email: user.email
     }
   })
+  console.log('b')
   if (emailExists) return res.status(400).send('Email is already taken')
   const usernameExists = await User.findOne({
     where: {
@@ -55,23 +50,32 @@ router.post('/signup', async (req, res) => {
     }
   })
   if (usernameExists) return res.status(400).send('Username is already taken')
+  console.log('c')
 
-  console.log('e')
   // Create new user
-  User.create({
-    ...user
+  AuthUser.create({
+    // ...user
+    email: user.email,
+    password: user.password
   })
-    .then((user) => {
+    .then((createdUser) => {
       const token = generateToken(
-        user.id,
+        createdUser.id,
         process.env.TOKEN_SECRET,
         process.env.TOKEN_LIFE
       )
       const refreshToken = generateToken(
-        user.id,
+        createdUser.id,
         process.env.REFRESH_TOKEN_SECRET,
         process.env.REFRESH_TOKEN_LIFE
       )
+      User.create({
+        // ...user
+        username: user.username
+      })
+      .catch((err) => {
+        res.status(400).send(err)
+      })
       res.header('auth-token', token).header('refresh-token', refreshToken).send(user)
     })
     .catch((err) => {

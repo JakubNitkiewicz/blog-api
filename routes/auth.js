@@ -72,11 +72,13 @@ router.post('/signup', async (req, res) => {
       User.create({
         // ...user
         username: user.username
-      })
-      .catch((err) => {
+      }).catch((err) => {
         res.status(400).send(err)
       })
-      res.header('auth-token', token).header('refresh-token', refreshToken).send(user)
+      res
+        .header('auth-token', token)
+        .header('refresh-token', refreshToken)
+        .send(user)
     })
     .catch((err) => {
       res.status(400).send(err)
@@ -93,7 +95,7 @@ router.post('/signin', async (req, res) => {
   if (error) return res.status(400).send(error.details)
 
   // Check if user with provided email exists
-  const user = await User.findOne({
+  const user = await AuthUser.findOne({
     raw: true,
     where: {
       email: req.body.email
@@ -116,11 +118,7 @@ router.post('/signin', async (req, res) => {
     process.env.REFRESH_TOKEN_SECRET,
     process.env.REFRESH_TOKEN_LIFE
   )
-  console.log(token)
-  res
-    .header('auth-token', token)
-    .header('refresh-token', refreshToken)
-    .send(token + '       ' + refreshToken)
+  res.send({ id: user.id, token, refreshToken })
 })
 
 router.post('/refresh', async (req, res) => {

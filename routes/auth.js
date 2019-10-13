@@ -2,8 +2,8 @@ const router = require('express').Router()
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 
-const User = require('../models/User')
-const AuthUser = require('../models/AuthUser')
+const User = require('../models').User
+const AuthorizationUser = require('../models').AuthorizationUser
 const {
   signupValidation,
   loginValidation
@@ -37,7 +37,7 @@ router.post('/signup', async (req, res) => {
   if (error) return res.status(400).send(error.details)
   console.log('a')
   // Check if email/username already exists
-  const emailExists = await AuthUser.findOne({
+  const emailExists = await AuthorizationUser.findOne({
     where: {
       email: user.email
     }
@@ -53,7 +53,7 @@ router.post('/signup', async (req, res) => {
   console.log('c')
 
   // Create new user
-  AuthUser.create({
+  AuthorizationUser.create({
     // ...user
     email: user.email,
     password: user.password
@@ -72,13 +72,16 @@ router.post('/signup', async (req, res) => {
       User.create({
         // ...user
         username: user.username
-      }).catch((err) => {
-        res.status(400).send(err)
       })
-      res
-        .header('auth-token', token)
-        .header('refresh-token', refreshToken)
-        .send(user)
+        .then((createdUser) => {
+          res
+            .header('auth-token', token)
+            .header('refresh-token', refreshToken)
+            .send({ id: createdUser.id, username: createdUser.username, token, refreshToken })
+        })
+        .catch((err) => {
+          res.status(400).send(err)
+        })
     })
     .catch((err) => {
       res.status(400).send(err)
@@ -95,13 +98,30 @@ router.post('/signin', async (req, res) => {
   if (error) return res.status(400).send(error.details)
 
   // Check if user with provided email exists
-  const user = await AuthUser.findOne({
-    raw: true,
+  // const user = await AuthorizationUser.findOne({
+  //   raw: true,
+  //   where: {
+  //     email: req.body.email
+  //   }
+  // })
+  const user = await AuthorizationUser.findOne({
+    include: [
+      {
+        model: User,
+        attributes: []
+      }
+    ],
+    attributes: {
+      exclude: [],
+      include: ['User.username']
+    },
     where: {
       email: req.body.email
-    }
+    },
+    raw: true
   })
   if (!user) return res.status(400).send('Email or password is incorrect')
+  console.log(user)
 
   // Check if password is correct
   const validPassword = await bcrypt.compare(req.body.password, user.password)
@@ -118,7 +138,7 @@ router.post('/signin', async (req, res) => {
     process.env.REFRESH_TOKEN_SECRET,
     process.env.REFRESH_TOKEN_LIFE
   )
-  res.send({ id: user.id, token, refreshToken })
+  res.send({ id: user.id, username: user.username, token, refreshToken })
 })
 
 router.post('/refresh', async (req, res) => {

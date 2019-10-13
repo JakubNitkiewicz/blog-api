@@ -1,28 +1,10 @@
-const Sequelize = require('sequelize')
-const db = require('../db')
-
-const News = db.define('news', {
-  title: {
-    type: Sequelize.STRING
-  },
-  content: {
-    type: Sequelize.STRING
-  },
-  title: {
-    type: Sequelize.STRING
-  },
-  title: {
-    type: Sequelize.STRING
-  },
-  title: {
-    type: Sequelize.STRING
-  },
-  title: {
-    type: Sequelize.STRING
-  },
-  title: {
-    type: Sequelize.STRING
-  },
-})
-
-module.exports = News
+'use strict';
+module.exports = (sequelize, DataTypes) => {
+  const News = sequelize.define('News', {
+    title: DataTypes.STRING
+  }, {});
+  News.associate = function(models) {
+    // associations can be defined here
+  };
+  return News;
+};

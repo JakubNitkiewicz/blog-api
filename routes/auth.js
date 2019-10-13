@@ -54,9 +54,7 @@ router.post('/signup', async (req, res) => {
 
   // Create new user
   AuthorizationUser.create({
-    // ...user
-    email: user.email,
-    password: user.password
+    ...user
   })
     .then((createdUser) => {
       const token = generateToken(
@@ -97,13 +95,6 @@ router.post('/signin', async (req, res) => {
   }).error
   if (error) return res.status(400).send(error.details)
 
-  // Check if user with provided email exists
-  // const user = await AuthorizationUser.findOne({
-  //   raw: true,
-  //   where: {
-  //     email: req.body.email
-  //   }
-  // })
   const user = await AuthorizationUser.findOne({
     include: [
       {
@@ -121,7 +112,6 @@ router.post('/signin', async (req, res) => {
     raw: true
   })
   if (!user) return res.status(400).send('Email or password is incorrect')
-  console.log(user)
 
   // Check if password is correct
   const validPassword = await bcrypt.compare(req.body.password, user.password)
@@ -141,8 +131,61 @@ router.post('/signin', async (req, res) => {
   res.send({ id: user.id, username: user.username, token, refreshToken })
 })
 
+
+// Refresh JWT route
 router.post('/refresh', async (req, res) => {
-  return
+  const refreshToken = req.header('refresh-token')
+  if (!refreshToken) return res.status(401).send('Access Denied')
+  try {
+    // check if refreshToken is still valid
+    const verifiedJWT = jwt.verify(
+      refreshToken,
+      process.env.REFRESH_TOKEN_SECRET
+    )
+    const user = await AuthorizationUser.findOne({
+      include: [
+        {
+          model: User,
+          attributes: []
+        }
+      ],
+      attributes: {
+        exclude: [],
+        include: ['User.username']
+      },
+      where: {
+        id: verifiedJWT.id
+      },
+      raw: true
+    })
+
+    // TODO:
+    // check if user is banned
+
+    // if last time user was modified before refreshToken was issued
+    // it means email/password hasn't been changed and it's safe to refresh token
+    const issued = new Date(verifiedJWT.exp * 1000)
+    console.log(issued < user.updatedAt)
+    console.log(issued > user.updatedAt)
+    if (issued < user.updatedAt) {
+      res.status(401).json({ messae: '!Invalid token' })
+    }
+
+    // generate new set of tokens and send to user
+    const newToken = generateToken(
+      user.id,
+      process.env.TOKEN_SECRET,
+      process.env.TOKEN_LIFE
+    )
+    const newRefreshToken = generateToken(
+      user.id,
+      process.env.REFRESH_TOKEN_SECRET,
+      process.env.REFRESH_TOKEN_LIFE
+    )
+    res.send({ id: user.id, username: user.username, token: newToken, refreshToken: newRefreshToken })
+  } catch (err) {
+    res.status(401).json({ message: 'Invalid token' })
+  }
 })
 
 const generateToken = (id, secret, life) => {

@@ -39,7 +39,7 @@ router.get('/:id', (req, res) => {
     ],
     attributes: {
       exclude: [],
-      include: ['UserDetails.avatarURL', 'UserDetails.posts']
+      include: ['UserDetail.about', 'UserDetail.avatarURL', 'UserDetail.posts']
     },
     where: {
       id: req.params.id
@@ -53,6 +53,5 @@ router.get('/:id', (req, res) => {
       res.status(400).send(err)
     })
 })
-
 
 module.exports = router

@@ -11,6 +11,12 @@ module.exports = {
       avatarURL: {
         type: Sequelize.STRING
       },
+      about: {
+        type: Sequelize.STRING,
+        validate: {
+          max: 1024
+        }
+      },
       posts: {
         type: Sequelize.INTEGER,
         defaultValue: 0

@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken')
 
 const User = require('../models').User
 const AuthorizationUser = require('../models').AuthorizationUser
+const UserDetails = require('../models').UserDetails
 const {
   signupValidation,
   loginValidation
@@ -26,23 +27,23 @@ router.post('/signup', async (req, res) => {
   const salt = await bcrypt.genSalt(10)
   const hashedPassword = await bcrypt.hash(req.body.password, salt)
 
+  const lowercaseEmail = new String(req.body.email).toLowerCase()
   const user = {
     username: req.body.username,
-    email: req.body.email,
+    email: lowercaseEmail,
     password: hashedPassword
   }
 
   // Validate input
   const error = signupValidation(user).error
   if (error) return res.status(400).send(error.details)
-  console.log('a')
+
   // Check if email/username already exists
   const emailExists = await AuthorizationUser.findOne({
     where: {
       email: user.email
     }
   })
-  console.log('b')
   if (emailExists) return res.status(400).send('Email is already taken')
   const usernameExists = await User.findOne({
     where: {
@@ -50,7 +51,6 @@ router.post('/signup', async (req, res) => {
     }
   })
   if (usernameExists) return res.status(400).send('Username is already taken')
-  console.log('c')
 
   // Create new user
   AuthorizationUser.create({
@@ -67,18 +67,25 @@ router.post('/signup', async (req, res) => {
         process.env.REFRESH_TOKEN_SECRET,
         process.env.REFRESH_TOKEN_LIFE
       )
-      User.create({
-        // ...user
-        username: user.username
-      })
-        .then((createdUser) => {
-          res
-            .header('auth-token', token)
-            .header('refresh-token', refreshToken)
-            .send({ id: createdUser.id, username: createdUser.username, token, refreshToken })
+      user.id = createdUser.id
+      Promise.all([
+        User.create({
+          ...user
+        }),
+        UserDetails.create({
+          ...user
         })
-        .catch((err) => {
-          res.status(400).send(err)
+      ])
+        .then(() => {
+          res.send({
+            id: user.id,
+            username: user.username,
+            token,
+            refreshToken
+          })
+        })
+        .catch((error) => {
+          res.status(400).send(error)
         })
     })
     .catch((err) => {
@@ -131,7 +138,6 @@ router.post('/signin', async (req, res) => {
   res.send({ id: user.id, username: user.username, token, refreshToken })
 })
 
-
 // Refresh JWT route
 router.post('/refresh', async (req, res) => {
   const refreshToken = req.body.refreshToken
@@ -182,7 +188,12 @@ router.post('/refresh', async (req, res) => {
       process.env.REFRESH_TOKEN_SECRET,
       process.env.REFRESH_TOKEN_LIFE
     )
-    res.send({ id: user.id, username: user.username, token: newToken, refreshToken: newRefreshToken })
+    res.send({
+      id: user.id,
+      username: user.username,
+      token: newToken,
+      refreshToken: newRefreshToken
+    })
   } catch (err) {
     res.status(401).json({ message: 'Invalid token' })
   }

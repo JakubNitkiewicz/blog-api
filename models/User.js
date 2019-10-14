@@ -7,6 +7,9 @@ module.exports = (sequelize, DataTypes) => {
     User.belongsTo(models.AuthorizationUser, {
       foreignKey: 'id'
     })
+    User.belongsTo(models.UserDetails, {
+      foreignKey: 'id'
+    })
   };
   return User;
 };

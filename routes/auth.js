@@ -134,7 +134,7 @@ router.post('/signin', async (req, res) => {
 
 // Refresh JWT route
 router.post('/refresh', async (req, res) => {
-  const refreshToken = req.header('refresh-token')
+  const refreshToken = req.body.refreshToken
   if (!refreshToken) return res.status(401).send('Access Denied')
   try {
     // check if refreshToken is still valid
@@ -189,6 +189,7 @@ router.post('/refresh', async (req, res) => {
 })
 
 const generateToken = (id, secret, life) => {
+  console.log(life)
   return jwt.sign({ id }, secret, { expiresIn: life })
 }
 

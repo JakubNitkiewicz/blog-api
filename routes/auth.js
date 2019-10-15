@@ -8,7 +8,7 @@ const UserDetails = require('../models').UserDetails
 const {
   signupValidation,
   loginValidation
-} = require('../controllers/auth/validation')
+} = require('../controllers/validation/auth')
 
 // Get all users
 router.get('/', (req, res) => {
@@ -171,8 +171,6 @@ router.post('/refresh', async (req, res) => {
     // if last time user was modified before refreshToken was issued
     // it means email/password hasn't been changed and it's safe to refresh token
     const issued = new Date(verifiedJWT.exp * 1000)
-    console.log(issued < user.updatedAt)
-    console.log(issued > user.updatedAt)
     if (issued < user.updatedAt) {
       res.status(401).json({ messae: '!Invalid token' })
     }
@@ -200,7 +198,6 @@ router.post('/refresh', async (req, res) => {
 })
 
 const generateToken = (id, secret, life) => {
-  console.log(life)
   return jwt.sign({ id }, secret, { expiresIn: life })
 }
 

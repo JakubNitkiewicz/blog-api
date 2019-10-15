@@ -1,5 +1,4 @@
 const Joi = require('@hapi/joi')
-// const db = require('../../db')
 
 const signupValidation = (data) => {
   const userSchema = Joi.object({

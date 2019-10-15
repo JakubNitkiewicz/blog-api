@@ -23,11 +23,13 @@ db.authenticate()
 const authRoutes = require('./routes/auth')
 const installRoutes = require('./routes/install')
 const userRoutes = require('./routes/user')
+const newsRoutes = require('./routes/news')
 
 // Route MiddleWare
 app.use('/api/install', installRoutes)
 app.use('/api/auth', authRoutes)
 app.use('/api/user', userRoutes)
+app.use('/api/news', newsRoutes)
 
 
 //test

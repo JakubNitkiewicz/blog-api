@@ -1,7 +1,7 @@
 # Khorinis API
 
 ## Get started
-You must have Node.js, PostgresQL and global npm package 'sequelize-cli' installed
+You must have Node.js, PostgreSQL and global npm package 'sequelize-cli' installed
 
 ### Project setup
 You have to rename .env.default to .env default and fill database connection setting and your secrets for JWT.

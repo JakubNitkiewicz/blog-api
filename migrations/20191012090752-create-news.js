@@ -16,21 +16,25 @@ module.exports = {
         }
       },
       introductionText: {
-        type: Sequelize.STRING(1000),
+        type: Sequelize.TEXT,
         allowNull: false,
         validate: {
-          max: 1000
+          max: 10000
         }
       },
       expandedText: {
-        type: Sequelize.STRING(10000),
+        type: Sequelize.TEXT,
         validate: {
-          max: 10000
+          max: 100000
         }
       },
       authorId: {
         type: Sequelize.INTEGER,
         allowNull: false
+      },
+      comments: {
+        type: Sequelize.INTEGER,
+        defaultValue: 0
       },
       createdAt: {
         allowNull: false,

@@ -15,6 +15,7 @@ const AuthorizationUser = require('../models').AuthorizationUser
 // })
 
 router.get('/', (req, res) => {
+  console.log('in get /user')
   User.findAll({
     attributes: {
       exclude: ['updatedAt']
